@@ -1,0 +1,44 @@
+{
+  "name": "telegram-polymarket-bot",
+  "version": "1.0.0",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "NODE_ENV=development ts-node src/index.ts",
+    "dev:watch": "NODE_ENV=development nodemon --exec ts-node src/index.ts",
+    "prod": "npm run build && NODE_ENV=production node dist/index.js",
+    "setup": "ts-node scripts/setup-dev.ts",
+    "db:generate": "prisma generate",
+    "db:migrate": "prisma migrate dev",
+    "db:deploy": "prisma migrate deploy",
+    "db:studio": "prisma studio",
+    "type-check": "tsc --noEmit",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "@aws-sdk/client-kms": "^3.817.0",
+    "@aws-sdk/util-buffer-from": "^3.259.0",
+    "@aws-sdk/util-utf8-node": "^3.259.0",
+    "@hashgraph/sdk": "^2.64.5",
+    "@prisma/client": "^6.8.2",
+    "aws-kms-signer-nodejs": "^0.0.6",
+    "axios": "^1.6.0",
+    "body-parser": "^1.20.2",
+    "dotenv": "^16.5.0",
+    "express": "^5.1.0",
+    "node-telegram-bot-api": "^0.66.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "@types/node-telegram-bot-api": "^0.64.0",
+    "nodemon": "^3.1.10",
+    "prisma": "^6.8.2",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.3.3"
+  }
+}
