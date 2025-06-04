@@ -2,23 +2,29 @@
 const TelegramBot = require('node-telegram-bot-api');
 
 async function handleHelp(bot: any, msg: any): Promise<void> {
-    const helpMessage = `🤖 Hedera Polymarket Bot Help
+    const helpMessage = `🤖 *Hedera Polymarket Bot Help*
 
-I can help you manage your Hedera wallet for Polymarket Predictions and DeFi activities.
+I can help you manage your Hedera wallet and explore Polymarket prediction markets.
 
-📋 Available Actions:
+📋 *Available Actions:*
 
-💳 Create Wallet - Create a new Hedera wallet
-💰 Check Balance - View your wallet balance
-💸 Send HBAR - Transfer HBAR to another account
+💳 *Wallet Commands:*
+• \`/create_wallet\` - Create a new Hedera wallet
+• \`/balance\` - View your wallet balance
+• \`/send_hbar <recipient> <amount>\` - Transfer HBAR
 
-💡 Tips:
+🎯 *Polymarket Commands:*
+• \`/search_markets <term>\` - Search prediction markets
+
+💡 *Tips:*
 • Your wallet is automatically funded with 10 tinybars when created
-• You can send HBAR to both Account IDs (0.0.xxxxx) and EVM addresses
+• You can send HBAR to both Account IDs \(0.0.xxxxx\) and EVM addresses
 • All transactions are on Hedera Testnet for development
+• Use search\\_markets to find interesting prediction markets
+• Click market links to trade on Polymarket
 
-🔗 Need More Help?
-Visit [Hedera Documentation](https://docs.hedera.com) for more information.`;
+🔗 *Need More Help?*
+Visit [Hedera Docs](https://docs.hedera.com) or [Polymarket](https://polymarket.com) for more information.`;
 
     const keyboard = {
         inline_keyboard: [
@@ -28,6 +34,9 @@ Visit [Hedera Documentation](https://docs.hedera.com) for more information.`;
             ],
             [
                 { text: '💸 Send HBAR', callback_data: 'send_hbar' },
+                { text: '🔍 Search Markets', callback_data: 'search_markets' }
+            ],
+            [
                 { text: '🏠 Main Menu', callback_data: 'start' }
             ]
         ]

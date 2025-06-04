@@ -13,6 +13,38 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model PolymarketMarket {
+  id                      String    @id @default(cuid())
+  conditionId            String    @unique  // CTF condition ID
+  questionId             String    
+  question               String    @db.Text
+  marketSlug             String    @unique
+  category               String?
+  fpmm                   String    // Contract address on Polygon network
+  endDate                DateTime  // end_date_iso
+  gameStartTime          DateTime? // game_start_time
+  secondsDelay           Int       @default(0)
+  minimumOrderSize      Int    @default(15)
+  minimumTickSize       Float    @default(0.01)
+  minIncentiveSize      String?   // min_incentive_size
+  maxIncentiveSpread    String?   // max_incentive_spread
+  tokens                 Json[]    // Array of {token_id: string, outcome: string}
+  rewards                Json?     // {min_size: number, max_spread: number, event_start_date: string, event_end_date: string, in_game_multiplier: number, reward_epoch: number}
+  active                 Boolean   @default(true)
+  closed                 Boolean   @default(false)
+  icon                   String?
+  description            String    @db.Text
+  archived               Boolean   @default(false)
+  acceptingOrders       Boolean   @default(true)
+  acceptingOrderTimestamp DateTime?
+  notificationsEnabled  Boolean   @default(true)
+  negRisk               Boolean   @default(false)
+  negRiskMarketId      String?
+  negRiskRequestId     String?
+  is5050Outcome        Boolean   @default(false)
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+}
 
 model User {
   id        String   @id @default(cuid())
@@ -32,5 +64,11 @@ model Wallet {
   publicKey String   // Hedera Public Key
   encryptedPrivateKey String? // Encrypted private key if custodial, null if MPC
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model SyncState {
+  id        String   @id
+  cursor    String
   updatedAt DateTime @updatedAt
 }

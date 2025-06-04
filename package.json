@@ -25,12 +25,15 @@
     "@aws-sdk/util-buffer-from": "^3.259.0",
     "@aws-sdk/util-utf8-node": "^3.259.0",
     "@hashgraph/sdk": "^2.64.5",
-    "@prisma/client": "^6.8.2",
+    "@polymarket/clob-client": "^4.18.0",
+    "@prisma/client": "^6.9.0",
     "aws-kms-signer-nodejs": "^0.0.6",
     "axios": "^1.6.0",
     "body-parser": "^1.20.2",
     "dotenv": "^16.5.0",
+    "ethers": "^6.14.3",
     "express": "^5.1.0",
+    "limiter": "^3.0.0",
     "node-telegram-bot-api": "^0.66.0"
   },
   "devDependencies": {

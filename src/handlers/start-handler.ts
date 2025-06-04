@@ -16,6 +16,9 @@ Choose an action from the buttons below to get started! 🚀`;
             ],
             [
                 { text: '💸 Send HBAR', callback_data: 'send_hbar' },
+                { text: '🔍 Search Markets', callback_data: 'search_markets' }
+            ],
+            [
                 { text: '❓ Help', callback_data: 'help' }
             ]
         ]
