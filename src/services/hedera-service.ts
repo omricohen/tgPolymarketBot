@@ -79,22 +79,33 @@ async function createHederaAccountProgrammatically(): Promise<AccountAliasResult
    //Get the Transaction ID
    const txIdAccountCreated = txCreateAccountResponse.transactionId.toString();
 
+
    console.log("------------------------------ Create Account ------------------------------ ");
    console.log("Receipt status       :", statusCreateAccountTx.toString());
    console.log("Transaction ID       :", txIdAccountCreated);
    console.log("Hashscan URL         :", `https://hashscan.io/testnet/tx/${txIdAccountCreated}`);
    console.log("Account ID           :", accountId?.toString());
-   console.log("Private key          :", accountPrivateKey.toString());
    console.log("Public key           :", accountPublicKey.toString());
    console.log("EVM address          :", accountPublicKey.toEvmAddress());
    console.log("EVM address          :", accountPublicKey.toEvmAddress());
 
 
-  return {
-    newAccountId: accountId?.toString(),
-    evmAddress: "0x"+accountPublicKey.toEvmAddress(),
-    newPublicKey: accountPublicKey.toString(),
-    encryptedPrivateKey: accountPrivateKey.toString()};
+   try {
+      const encryptedPrivateKeyString = await encryptWithKMS(accountPrivateKey.toStringRaw(), process.env.AWS_KMS_KEY_ID_USER_ENCRYPTION!);
+      console.log("User private key encrypted with KMS.");
+
+      return {
+        newAccountId: accountId?.toString(),
+        evmAddress: "0x"+accountPublicKey.toEvmAddress(),
+        newPublicKey: accountPublicKey.toString(),
+        encryptedPrivateKey: encryptedPrivateKeyString
+      };
+  } catch (kmsError) {
+      console.error("Failed to encrypt user private key with KMS:", kmsError);
+      // Handle this error appropriately: e.g., throw, or decide not to store the key.
+      throw new Error("Failed to securely store user private key.");
+  }
+
 }
 
 async function getAccountBalance(accountId: string | AccountId): Promise<AccountBalanceJson> {

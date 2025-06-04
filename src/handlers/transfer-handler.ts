@@ -4,6 +4,7 @@ import { prisma } from '../config/database';
 import { transferHbar } from '../services/hedera-service';
 import { operatorKey } from '../config/hedera';
 import { PrivateKey } from '@hashgraph/sdk';
+import { decryptWithKMS } from '../config/aws-kms';
 
 // /send_hbar command handler
 async function handleSendHbar(bot: any, msg: any, match: RegExpMatchArray): Promise<void> {
@@ -34,8 +35,8 @@ async function handleSendHbar(bot: any, msg: any, match: RegExpMatchArray): Prom
 
         let signingKeyOrKmsSigner: PrivateKey | undefined; // = operatorKey; // Default to operator key for simplicity in this example
         // In a real app, if users have their own custodial keys (encrypted), you'd decrypt:
-            //  const decryptedKey = await decryptWithKMS(user.wallet.encryptedPrivateKey, AWS_KMS_KEY_ID_USER_ENCRYPTION);
-        signingKeyOrKmsSigner = PrivateKey.fromStringECDSA(user.wallet.encryptedPrivateKey);
+        const decryptedKey = await decryptWithKMS(user.wallet.encryptedPrivateKey, process.env.AWS_KMS_KEY_ID_USER_ENCRYPTION!);
+        signingKeyOrKmsSigner = PrivateKey.fromStringECDSA(decryptedKey);
 
         await bot.sendMessage(telegramId, `Attempting to send ${amountHbar} HBAR to \`${recipientIdOrEvm}\`...`);
 

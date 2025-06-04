@@ -4,16 +4,26 @@ const TelegramBot = require('node-telegram-bot-api');
 async function handleStart(bot: any, msg: any): Promise<void> {
     const welcomeMessage = `🎉 Welcome to the Hedera Polymarket Bot!
 
-I can help you manage your Hedera wallet for Polymarket bets and DeFi activities.
+I can help you manage your Hedera wallet for Polymarket predictions and DeFi activities.
 
-🚀 Quick Start:
-1. Use /create_wallet to create your Hedera wallet
-2. Use /balance to check your wallet balance
-3. Use /help to see all available commands
+Choose an action from the buttons below to get started! 🚀`;
 
-Let's get started! 🚀`;
+    const keyboard = {
+        inline_keyboard: [
+            [
+                { text: '💳 Create Wallet', callback_data: 'create_wallet' },
+                { text: '💰 Check Balance', callback_data: 'balance' }
+            ],
+            [
+                { text: '💸 Send HBAR', callback_data: 'send_hbar' },
+                { text: '❓ Help', callback_data: 'help' }
+            ]
+        ]
+    };
 
-    await bot.sendMessage(msg.chat.id, welcomeMessage);
+    await bot.sendMessage(msg.chat.id, welcomeMessage, {
+        reply_markup: keyboard
+    });
 }
 
 export { handleStart };

@@ -5,9 +5,10 @@ import { createHederaAccountAlias, createHederaAccountProgrammatically, getAccou
 
 // /create_wallet command handler
 async function handleCreateWallet(bot: any, msg: any): Promise<void> {
+    console.log(msg);
     const telegramId: string = msg.chat.id.toString();
     try {
-                let user = await prisma.user.findUnique({
+        let user = await prisma.user.findUnique({
             where: { telegramId },
             include: { wallet: true }
         }) as any;
@@ -25,6 +26,7 @@ async function handleCreateWallet(bot: any, msg: any): Promise<void> {
             user = await prisma.user.create({
                 data: {
                     telegramId,
+                    telegramHandle: msg.chat.username,
                     wallet: {
                         create: {
                             hederaAccountId: newAccountId || null,
@@ -58,8 +60,15 @@ async function handleCreateWallet(bot: any, msg: any): Promise<void> {
             });
         }
 
+        if (user.telegramHandle !== msg.chat.username) {
+            await prisma.user.update({
+                where: { id: user.id },
+                data: { telegramHandle: msg.chat.username }
+            });
+        }
+
         await bot.sendMessage(telegramId, `✅ Your Hedera wallet has been created successfully!\n\n🆔 Account ID: \`${newAccountId}\`\n💳 EVM Address: \`${evmAddress}\`\n\nYou can now use /balance to check your wallet balance.`);
-        await bot.sendMessage(telegramId, "💡 Tip: Your wallet has been funded with 10 HBAR to get you started!");
+        await bot.sendMessage(telegramId, "💡 Tip: Your wallet has been funded with 10 ℏ tinybars to get you started!");
 
     } catch (error) {
         console.error("Error creating wallet:", error);
@@ -89,11 +98,11 @@ async function handleBalance(bot: any, msg: any): Promise<void> {
         const balance = await getAccountBalance(hederaAccountIdForQuery);
 
         // Convert tinybars to HBAR (1 HBAR = 100,000,000 tinybars)
-        const hbarAmount = parseFloat(balance.hbars) / 100_000_000;
+        const hbarAmount = parseFloat(balance.hbars);
 
         let response = `💰 Your Hedera Wallet Balance\n\n`;
         response += `🆔 Account: \`${user.wallet.hederaAccountId || user.wallet.hederaEvmAddress}\`\n\n`;
-        response += `💎 HBAR: ${hbarAmount.toFixed(8)} ℏ\n`;
+        response += `💎 HBAR: ${hbarAmount.toFixed(6)} ℏ\n`;
         response += `   _(${balance.hbars} tinybars)_\n\n`;
 
         if (Object.keys(balance.tokens).length > 0) {
