@@ -1,16 +1,19 @@
 // Database configuration with Prisma ORM
 import { PrismaClient } from '@prisma/client';
-
-let prisma: PrismaClient;
-
-// Singleton pattern for PrismaClient in serverless environments to prevent multiple connections
-if (process.env.NODE_ENV === 'production') {
-  if (!(global as any).prisma) {
-    (global as any).prisma = new PrismaClient();
-  }
-  prisma = (global as any).prisma;
-} else {
-  prisma = new PrismaClient();
+// Declare global prisma instance
+console.log('Database initialized1');
+declare global {
+    var prisma: PrismaClient | undefined;
 }
 
+// Create singleton instance
+console.log('Database initialized2');
+const prisma = 
+    global.prisma || 
+    new PrismaClient({
+        log: ['query', 'info', 'warn', 'error'],
+    });
+global.prisma ||= prisma;
+console.log('Database initialized3');
+// Export the prisma instance
 export { prisma };

@@ -6,9 +6,10 @@ import { logInfo, logError } from '../services/logger-service';
 const operatorId: AccountId = AccountId.fromString(process.env.HEDERA_OPERATOR_ID!);
 
 // For production, use kmsHederaSigner. For dev/test, can use direct key:
-const operatorKey: PrivateKey | KMSHederaSigner = process.env.NODE_ENV === 'production'
-    ? kmsHederaSigner
-    : PrivateKey.fromStringECDSA(process.env.HEDERA_OPERATOR_PRIVATE_KEY!);
+//process.env.NODE_ENV === 'production'
+//? kmsHederaSigner
+//: 
+const operatorKey: PrivateKey | KMSHederaSigner = PrivateKey.fromStringECDSA(process.env.HEDERA_OPERATOR_PRIVATE_KEY!);
 
 // Initialize client based on environment
 const client: Client = process.env.NODE_ENV === 'production'

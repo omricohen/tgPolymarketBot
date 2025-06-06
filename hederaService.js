@@ -11,7 +11,7 @@ const operatorId = process.env.HEDERA_OPERATOR_ID ?
 
 const kmsKeyId = process.env.AWS_KMS_KEY_ID; // AWS KMS Key ID for operator [3]
 
-const client = Client.forTestnet(); // Use Client.forMainnet() for production
+const client = process.env.NODE_ENV === 'production' ? Client.forMainnet() : Client.forTestnet(); // Use Client.forMainnet() for production
 
 // AWS KMS client for Hedera operator key signing
 const kmsClient = new KMSClient({ region: process.env.AWS_REGION || "us-east-1" }); // Configure your AWS region
@@ -65,32 +65,6 @@ client.setOperatorWith(kmsHederaSigner); // Set custom signer for operator [7]
 //     rpcUrl: "https://polygon-mainnet.g.alchemy.com/v2/YOUR_ALCHEMY_API_KEY", // Replace with your Polygon RPC
 // });
 
-async function createHederaAccount(telegramId) {
-  const newPrivateKey = PrivateKey.generateECDSA();
-  const newPublicKey = newPrivateKey.publicKey;
-  const evmAddress = newPublicKey.toEvmAddress(); // Get EVM address alias
-
-  // For now, we'll create a placeholder account ID that will be updated when the account is funded
-  // In a real implementation, you would either:
-  // 1. Create the account programmatically (requires HBAR for initial balance)
-  // 2. Wait for the first deposit to auto-create the account via EVM address alias
-  const placeholderAccountId = `0.0.${Date.now()}`; // Temporary placeholder
-
-  // If using custodial keys, encrypt and store the private key using AWS KMS
-  // const { encrypt } = require('@aws-crypto/client-node'); // Assuming this is imported
-  // const kmsKeyring = new KmsKeyringNode({ generatorKeyId: kmsKeyId }); // Or a specific encryption key
-  // const encryptedKeyResult = await encrypt(kmsKeyring, toUtf8Bytes(newPrivateKey.toStringRaw()), {
-  //     encryptionContext: { telegramId: telegramId }, // Use encryption context [1, 2]
-  // });
-  // const encryptedKey = Buffer.from(encryptedKeyResult.result).toString('base64');
-
-  return {
-    newAccountId: placeholderAccountId, // Will be updated when account is actually created/funded
-    evmAddress,
-    newPublicKey,
-    privateKey: newPrivateKey // Include for now - in production this should be encrypted
-  };
-}
 
 async function createHederaAccountProgrammatically() {
   const newPrivateKey = PrivateKey.generateECDSA();
