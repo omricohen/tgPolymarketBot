@@ -20,10 +20,6 @@ module.exports = {
     merge_logs: true,
     // Graceful shutdown
     kill_timeout: 5000,
-    wait_ready: true,
-    listen_timeout: 10000,
-    // Restart on memory threshold
-    max_memory_restart: '1G',
     // Monitoring
     metrics: {
       http: {
