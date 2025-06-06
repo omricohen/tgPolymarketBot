@@ -1,5 +1,6 @@
-import { ClobClient, Side, ApiKeyCreds, OpenOrder } from '@polymarket/clob-client';
-import { ethers } from 'ethers';
+import { ClobClient, Side, ApiKeyCreds, OpenOrder, Chain } from '@polymarket/clob-client';
+import { Wallet } from "@ethersproject/wallet";
+import { JsonRpcProvider } from "@ethersproject/providers";
 
 export interface PolymarketConfig {
   host: string;
@@ -100,12 +101,19 @@ export interface OrderHistory {
 
 export class PolymarketIntegration {
   private client: ClobClient;
-  private signer: ethers.Wallet;
+  private signer: Wallet;
   private config: PolymarketConfig;
 
   constructor(config: PolymarketConfig) {
     this.config = config;
-    this.signer = new ethers.Wallet(config.privateKey);
+    
+    // Initialize provider and signer
+    const provider = new JsonRpcProvider(
+      config.chainId === Chain.POLYGON 
+        ? "https://polygon-rpc.com" 
+        : "https://polygon-mumbai.infura.io/v3/your-infura-id"
+    );
+    this.signer = new Wallet(config.privateKey, provider);
     
     // Initialize CLOB client with credentials
     const creds: ApiKeyCreds | undefined = config.apiKey ? {
@@ -114,12 +122,12 @@ export class PolymarketIntegration {
       passphrase: config.passphrase!,
     } : undefined;
 
-    // Initialize client with signer and chain ID
+    // Initialize client with chain ID and signer
     this.client = new ClobClient(
       config.host || "https://clob.polymarket.com",
+      config.chainId || Chain.POLYGON, // Default to Polygon mainnet
       this.signer,
-      creds,
-      config.chainId || 137 // Default to Polygon mainnet
+      creds
     );
   }
 
@@ -238,7 +246,7 @@ export class PolymarketIntegration {
         price: orderRequest.price,
         side,
         size,
-        feeRateBps: "0"
+        feeRateBps: 0
       });
 
       // Post the order
@@ -488,8 +496,8 @@ ${market.description ? `**Description:** ${market.description}` : ''}`;
     
     if (balance.positions.length > 0) {
       message += `📊 **Positions:**\n`;
-      balance.positions.forEach((position, index) => {
-        message += `${index + 1}. ${position.outcome}: ${position.shares} shares ($${position.value.toFixed(2)})\n`;
+      balance.positions.forEach(pos => {
+        message += `- ${pos.outcome}: ${pos.shares} shares ($${pos.value.toFixed(2)})\n`;
       });
     } else {
       message += `📊 **Positions:** None`;
