@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "main": "dist/index.js",
   "scripts": {
+    "clean": "rm -rf dist/",
     "build": "tsc",
     "start": "node dist/index.js",
     "dev": "NODE_ENV=development  nodemon --exec ts-node src/index.ts",
@@ -14,6 +15,7 @@
     "prod:monitor": "pm2 monit",
     "prod:status": "pm2 status",
     "prod:setup": "ts-node scripts/setup-prod.ts",
+    "prod:fresh": "npm run clean && npm run build && npm run prod",
     "setup": "ts-node scripts/setup-dev.ts",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",

@@ -4,6 +4,30 @@ import { logInfo, logError } from './services/logger-service';
 import { bot } from './bot';
 import { prisma } from './config/database';
 
+// Start the bot
+async function startBot() {
+    try {
+        logInfo('Starting bot...');
+        
+        // Ensure database connection
+        await prisma.$connect();
+        logInfo('Database connected');
+
+        // Start bot polling
+        bot.startPolling();
+        logInfo('Bot polling started');
+
+        // Send ready signal to PM2
+        if (process.send) {
+            process.send('ready');
+            logInfo('PM2 ready signal sent');
+        }
+    } catch (error) {
+        logError(error as Error, 'Error starting bot');
+        process.exit(1);
+    }
+}
+
 // Handle graceful shutdown
 async function shutdown() {
     logInfo('Received shutdown signal, starting graceful shutdown...');
@@ -42,11 +66,11 @@ process.on('unhandledRejection', (reason, promise) => {
 process.on('SIGTERM', shutdown);
 process.on('SIGINT', shutdown);
 
-// Send ready signal to PM2
-if (process.send) {
-    process.send('ready');
-    logInfo('PM2 ready signal sent');
-}
+// Start the bot
+startBot().catch((error) => {
+    logError(error as Error, 'Failed to start bot');
+    process.exit(1);
+});
 
 // For Vercel webhook deployment, uncomment and modify the following:
 /*
