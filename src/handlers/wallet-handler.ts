@@ -20,12 +20,13 @@ async function handleCreateWallet(bot: any, msg: any): Promise<void> {
 
         await bot.sendMessage(telegramId, "Generating your Hedera wallet alias... this may take a moment.");
         let evmAddress, newAccountId, newPublicKey, encryptedPrivateKey;
+        // BLADE CANNOT SEND FUNDS TO a 0x address without an account
         //if its prod, create new account regular, otherwise create new account programmatically
-        if (process.env.NODE_ENV === 'production') {
-            ({ evmAddress, newAccountId, newPublicKey, encryptedPrivateKey } = await createHederaAccountAlias());
-        } else {
+        // if (process.env.NODE_ENV === 'production') {
+        //     ({ evmAddress, newAccountId, newPublicKey, encryptedPrivateKey } = await createHederaAccountAlias());
+        // } else {
             ({ evmAddress, newAccountId, newPublicKey, encryptedPrivateKey } = await createHederaAccountProgrammatically());
-        }
+        // }
 
         if (!user) {
             user = await prisma.user.create({
