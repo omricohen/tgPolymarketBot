@@ -136,12 +136,19 @@ bot.onText(/^[0-9]+(\.[0-9]+)?$/, async (msg: any) => {
 });
 
 // Handle /search_markets command
-bot.onText(/\/search_markets/, async (msg: any) => {
+bot.onText(/\/search_markets(?:\s+(.+))?/, async (msg: any, match: RegExpMatchArray | null) => {
     logTelegramRequest(msg, 'search_markets');
-    await bot.sendMessage(msg.chat.id, 
-        "What markets would you like to search for?",
-        { reply_markup: { force_reply: true, selective: true } }
-    );
+    
+    // If search term is provided with command, search immediately
+    if (match && match[1]) {
+        await handleSearchMarkets(bot, msg, match);
+    } else {
+        // Otherwise, ask for search term
+        await bot.sendMessage(msg.chat.id, 
+            "What markets would you like to search for?",
+            { reply_markup: { force_reply: true, selective: true } }
+        );
+    }
 });
 
 // Handle market search input
@@ -149,11 +156,12 @@ bot.onText(/^(?!\/)\w+.*/, async (msg: any) => {
     try {
         // Check if this is a reply to our search markets question
         if (msg.reply_to_message && 
-            msg.reply_to_message.from.id === bot.id && 
+            msg.reply_to_message.from.id === parseInt(process.env.TELEGRAM_BOT_ID!) && 
             msg.reply_to_message.text === "What markets would you like to search for?") {
             
             logTelegramRequest(msg, 'search_markets');
-            const match = ['dummy', msg.text] as RegExpMatchArray;
+            // Construct match array similar to command regex match
+            const match = [msg.text, msg.text] as unknown as RegExpMatchArray;
             await handleSearchMarkets(bot, msg, match);
         }
     } catch (error) {

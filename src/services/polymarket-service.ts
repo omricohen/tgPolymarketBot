@@ -16,9 +16,10 @@ export class PolymarketService {
     async searchMarkets(query: string, options: {limit: number}): Promise<PolymarketMarket[]> {
         const markets = await prisma.polymarketMarket.findMany({
             where: {
-                description: {
-                    contains: query,
-                },
+                        question: {
+                            contains: query,
+                            mode: 'insensitive',
+                        },
                 active: true,
                 acceptingOrders: true,
                 closed: false,
