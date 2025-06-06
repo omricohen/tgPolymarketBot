@@ -33,7 +33,13 @@ for (const envVar of requiredEnvVars) {
 
 // Initialize bot with polling
 export const bot = new TelegramBot(process.env.TELEGRAM_BOT_TOKEN, {
-    polling: true
+    polling: {
+        autoStart: false,
+        interval: 300,
+        params: {
+            timeout: 10
+        }
+    }
 });
 
 // Handle polling errors
