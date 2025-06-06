@@ -22,22 +22,44 @@ interface TransferResult {
     hashscanUrl: string;
 }
 
-
+/**
+ * Generates a new Hedera ECDSA key pair and derives its EVM address alias.
+ * This does NOT create an account on Hedera immediately. The account
+ * will be auto-created when funds are first sent to the returned EVM address.
+ * Optionally encrypts the private key using AWS KMS if custodial storage is enabled.
+ *
+ * @returns {Promise<AccountAliasResult>} An object containing the EVM address, public key, and (optionally encrypted) private key.
+ */
 async function createHederaAccountAlias(): Promise<AccountAliasResult> {
-    const newPrivateKey = PrivateKey.generateECDSA(); // Generate ECDSA key
-    const newPublicKey = newPrivateKey.publicKey;
-    const evmAddress = newPublicKey.toEvmAddress(); // Derive EVM address alias
+    console.log("Generating new Hedera key pair and EVM address alias...");
 
-    // In a custodial fallback scenario, encrypt and return the private key
-    let encryptedPrivateKey: string | null = null;
-    if (process.env.USE_CUSTODIAL_KEYS === 'true') { // Use an env var to control this
-        encryptedPrivateKey = await encryptWithKMS(newPrivateKey.toStringRaw(), AWS_KMS_KEY_ID_USER_ENCRYPTION!);
-    }
+    // 1. Generate a new ECDSA private key
+    const accountPrivateKey = PrivateKey.generateECDSA();
+    const accountPublicKey = accountPrivateKey.publicKey;
+    const evmAddress = "0x" + accountPublicKey.toEvmAddress(); // Ensure '0x' prefix for clarity
 
+    console.log("New Public Key:", accountPublicKey.toString());
+    console.log("Generated EVM Address Alias:", evmAddress);
+
+    // 2. Handle optional KMS encryption for the private key if custodial storage is enabled
+    let encryptedPrivateKeyString: string | null = null;
+
+        try {
+            encryptedPrivateKeyString = await encryptWithKMS(accountPrivateKey.toStringRaw(), process.env.AWS_KMS_KEY_ID_USER_ENCRYPTION!);
+            console.log("User private key encrypted with KMS for storage.");
+        } catch (kmsError) {
+            console.error("CRITICAL ERROR: Failed to encrypt user private key with KMS:", kmsError);
+            // In a real application, you might want to:
+            // 1. Log this failure and alert ops.
+            // 2. Decide if you want to proceed without storing the key (risky for 'on behalf' bets).
+            // 3. Throw the error to prevent wallet creation if key storage is mandatory.
+            throw new Error("Failed to securely generate wallet (KMS encryption failed).");
+        }
+    // 3. Return the necessary details
     return {
-        evmAddress,
-        newPublicKey: newPublicKey.toString(),
-        encryptedPrivateKey: encryptedPrivateKey // This is sensitive! Handle with care.
+        evmAddress: evmAddress,
+        newPublicKey: accountPublicKey.toString(),
+        encryptedPrivateKey: encryptedPrivateKeyString, // This will be null, encrypted, or plaintext for dev
     };
 }
 

@@ -1,8 +1,52 @@
 // Main entry point for the Telegram Bot application
 import 'dotenv/config';
+import { logInfo, logError } from './services/logger-service';
+import { bot } from './bot';
+import { prisma } from './config/database';
 
-// Import the bot to start it
-import './bot';
+// Handle graceful shutdown
+async function shutdown() {
+    logInfo('Received shutdown signal, starting graceful shutdown...');
+    
+    try {
+        // Stop the bot
+        await bot.stopPolling();
+        logInfo('Bot polling stopped');
+
+        // Close database connections
+        await prisma.$disconnect();
+        logInfo('Database connections closed');
+
+        // Log successful shutdown
+        logInfo('Graceful shutdown completed');
+        process.exit(0);
+    } catch (error) {
+        logError(error as Error, 'Error during shutdown');
+        process.exit(1);
+    }
+}
+
+// Handle uncaught exceptions
+process.on('uncaughtException', (error) => {
+    logError(error, 'Uncaught Exception');
+    shutdown().catch(() => process.exit(1));
+});
+
+// Handle unhandled promise rejections
+process.on('unhandledRejection', (reason, promise) => {
+    logError(reason as Error, 'Unhandled Rejection', { promise });
+    shutdown().catch(() => process.exit(1));
+});
+
+// Handle graceful shutdown signals
+process.on('SIGTERM', shutdown);
+process.on('SIGINT', shutdown);
+
+// Send ready signal to PM2
+if (process.send) {
+    process.send('ready');
+    logInfo('PM2 ready signal sent');
+}
 
 // For Vercel webhook deployment, uncomment and modify the following:
 /*

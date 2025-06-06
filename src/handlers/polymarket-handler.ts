@@ -25,27 +25,43 @@ export async function handleSearchMarkets(bot: TelegramBot, msg: TelegramBot.Mes
             return;
         }
 
-        for (const market of markets) {
+        // Create a numbered list of markets
+        let messageText = `*Search Results for "${searchQuery}"*\n\n`;
+        markets.forEach((market, index) => {
             const priceStr = market.tokens
                 .map(token => {
                     if (typeof token === 'object' && token !== null && !Array.isArray(token)) {
-                        return (token as {outcome?: string}).outcome + ': ' + (token as {price?: number}).price?.toFixed(2) + '%';
+                        return `${(token as {outcome?: string}).outcome}: $${(token as {price?: number}).price?.toFixed(2)}`;
                     }
                     return '';
                 })
-                .join('\n');
+                .join(' | ');
             
-            const message = `*${market.question}*\n\n` +
-                `📊 Current Probabilities:\n${priceStr}\n\n` +
-                // `💰 Volume: $${parseFloat(market.volume).toLocaleString()}\n` +
-                `⏰ Ends: ${new Date(market.endDate).toLocaleDateString()}\n\n` +
-                `[View on Polymarket](https://polymarket.com/event/${market.marketSlug})`;
+            messageText += `${index + 1}. *${market.question}*\n` +
+                         `📊 ${priceStr}\n` +
+                         `⏰ Ends: ${new Date(market.endDate).toLocaleDateString()}\n\n`;
+        });
 
-            await bot.sendMessage(chatId, message, {
-                parse_mode: 'Markdown',
-                disable_web_page_preview: true
-            });
+        // Create buttons in rows of 5
+        const buttons = markets.map((market, index) => ({
+            text: `${index + 1}`,
+            callback_data: `market_details:${market.id}`
+        }));
+
+        const keyboard = [];
+        for (let i = 0; i < buttons.length; i += 5) {
+            keyboard.push(buttons.slice(i, i + 5));
         }
+
+        const inlineKeyboard = {
+            inline_keyboard: keyboard
+        };
+
+        await bot.sendMessage(chatId, messageText, {
+            parse_mode: 'Markdown',
+            disable_web_page_preview: true,
+            reply_markup: inlineKeyboard
+        });
     } catch (error) {
         console.error('Error in handleSearchMarkets:', error);
         await bot.sendMessage(chatId, 
@@ -54,47 +70,47 @@ export async function handleSearchMarkets(bot: TelegramBot, msg: TelegramBot.Mes
     }
 }
 
-// export async function handleMarketDetails(bot: TelegramBot, msg: TelegramBot.Message, match: RegExpMatchArray | null) {
-//     const chatId = msg.chat.id;
+export async function handleMarketDetails(bot: TelegramBot, msg: TelegramBot.Message, marketId: string) {
+    const chatId = msg.chat.id;
     
-//     if (!match || !match[1]) {
-//         await bot.sendMessage(chatId, 
-//             "Please provide a market ID. Example:\n" +
-//             "`/market_details 12345`", 
-//             { parse_mode: 'Markdown' }
-//         );
-//         return;
-//     }
-
-//     const marketId = match[1].trim();
-    
-//     try {
-//         const market = await polymarketService.getMarketDetails(marketId);
+    try {
+        const market = await polymarketService.getMarket(marketId);
         
-//         if (!market) {
-//             await bot.sendMessage(chatId, "Market not found.");
-//             return;
-//         }
+        if (!market) {
+            await bot.sendMessage(chatId, "Market not found.");
+            return;
+        }
 
-//         const priceStr = market.prices
-//             .map((price, idx) => `${market.outcomes[idx]}: ${(price * 100).toFixed(2)}%`)
-//             .join('\n');
-        
-//         const message = `*${market.question}*\n\n` +
-//             `${market.description}\n\n` +
-//             `📊 Current Probabilities:\n${priceStr}\n\n` +
-//             `💰 Volume: $${parseFloat(market.volume).toLocaleString()}\n` +
-//             `⏰ Ends: ${new Date(market.endDate).toLocaleDateString()}\n\n` +
-//             `[View on Polymarket](${market.url})`;
+        // Create a detailed market view
+        const priceStr = market.tokens
+            .map(token => {
+                if (typeof token === 'object' && token !== null && !Array.isArray(token)) {
+                    const outcome = (token as {outcome?: string}).outcome;
+                    const price = (token as {price?: number}).price;
+                    return `${outcome}:\n` +
+                           `  Price: $${price?.toFixed(2)}`;
+                }
+                return '';
+            })
+            .join('\n\n');
 
-//         await bot.sendMessage(chatId, message, {
-//             parse_mode: 'Markdown',
-//             disable_web_page_preview: true
-//         });
-//     } catch (error) {
-//         console.error('Error in handleMarketDetails:', error);
-//         await bot.sendMessage(chatId, 
-//             "Sorry, there was an error fetching market details. Please try again later."
-//         );
-//     }
-// }
+        const message = `*${market.question}*\n\n` +
+            `📊 *Market Details*\n\n` +
+            `${priceStr}\n\n` +
+            `📝 Description: ${market.description}\n\n` +
+            `⏰ Resolution Date: ${new Date(market.endDate).toLocaleDateString()}\n` +
+            `${market.gameStartTime ? `🎮 Game Start: ${new Date(market.gameStartTime).toLocaleDateString()}\n` : ''}` +
+            `⚙️ Status: ${market.active ? 'Active' : 'Inactive'}${market.closed ? ' (Closed)' : ''}\n\n` +
+            `🔗 [Trade on Polymarket](https://polymarket.com/event/${market.marketSlug})`;
+
+        await bot.sendMessage(chatId, message, {
+            parse_mode: 'Markdown',
+            disable_web_page_preview: true
+        });
+    } catch (error) {
+        console.error('Error in handleMarketDetails:', error);
+        await bot.sendMessage(chatId, 
+            "Sorry, there was an error fetching market details. Please try again later."
+        );
+    }
+}

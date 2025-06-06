@@ -12,13 +12,14 @@ Choose an action from the buttons below to get started! 🚀`;
         inline_keyboard: [
             [
                 { text: '💳 Create Wallet', callback_data: 'create_wallet' },
-                { text: '💰 Check Balance', callback_data: 'balance' }
+                { text: '🔑 Wallet Info', callback_data: 'wallet_info' }
             ],
             [
-                { text: '💸 Send HBAR', callback_data: 'send_hbar' },
-                { text: '🔍 Search Markets', callback_data: 'search_markets' }
+                { text: '💰 Check Balance', callback_data: 'balance' },
+                { text: '💸 Send HBAR', callback_data: 'send_hbar' }
             ],
             [
+                { text: '🔍 Search Markets', callback_data: 'search_markets' },
                 { text: '❓ Help', callback_data: 'help' }
             ]
         ]

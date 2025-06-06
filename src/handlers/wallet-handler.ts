@@ -5,7 +5,6 @@ import { createHederaAccountAlias, createHederaAccountProgrammatically, getAccou
 
 // /create_wallet command handler
 async function handleCreateWallet(bot: any, msg: any): Promise<void> {
-    console.log(msg);
     const telegramId: string = msg.chat.id.toString();
     try {
         let user = await prisma.user.findUnique({
@@ -14,13 +13,19 @@ async function handleCreateWallet(bot: any, msg: any): Promise<void> {
         }) as any;
 
         if (user && user.wallet && user.wallet.hederaAccountId) {
-            await bot.sendMessage(telegramId, `You already have a Hedera wallet: \`${user.wallet.hederaAccountId}\`.`);
+            await bot.sendMessage(telegramId, 
+                "You already have a Hedera wallet. Use /wallet_info to see your wallet details or /balance to check your balance.");
             return;
         }
 
         await bot.sendMessage(telegramId, "Generating your Hedera wallet alias... this may take a moment.");
-
-        const { evmAddress, newAccountId, newPublicKey, encryptedPrivateKey } = await createHederaAccountProgrammatically();
+        let evmAddress, newAccountId, newPublicKey, encryptedPrivateKey;
+        //if its prod, create new account regular, otherwise create new account programmatically
+        if (process.env.NODE_ENV === 'production') {
+            ({ evmAddress, newAccountId, newPublicKey, encryptedPrivateKey } = await createHederaAccountAlias());
+        } else {
+            ({ evmAddress, newAccountId, newPublicKey, encryptedPrivateKey } = await createHederaAccountProgrammatically());
+        }
 
         if (!user) {
             user = await prisma.user.create({
@@ -67,8 +72,10 @@ async function handleCreateWallet(bot: any, msg: any): Promise<void> {
             });
         }
 
-        await bot.sendMessage(telegramId, `✅ Your Hedera wallet has been created successfully!\n\n🆔 Account ID: \`${newAccountId}\`\n💳 EVM Address: \`${evmAddress}\`\n\nYou can now use /balance to check your wallet balance.`);
-        await bot.sendMessage(telegramId, "💡 Tip: Your wallet has been funded with 10 ℏ tinybars to get you started!");
+        await bot.sendMessage(telegramId, 
+            "✅ Your Hedera wallet has been created successfully!\n\n" +
+            "Use /wallet_info to see your wallet details or /balance to check your balance.\n\n" +
+            "💡 Tip: Your wallet has been funded with 10 ℏ tinybars to get you started!");
 
     } catch (error) {
         console.error("Error creating wallet:", error);
@@ -86,22 +93,17 @@ async function handleBalance(bot: any, msg: any): Promise<void> {
         }) as any;
 
         if (!user || !user.wallet || !user.wallet.hederaEvmAddress) {
-            await bot.sendMessage(telegramId, "You don't have a Hedera wallet alias yet. Use /create_wallet to create one.");
+            await bot.sendMessage(telegramId, "You don't have a Hedera wallet yet. Use /create_wallet to create one.");
             return;
         }
 
-        // For a full implementation, you'd monitor the mirror node for the actual hederaAccountId from the evmAddress
-        // For simplicity, we'll use the evmAddress for mirror node queries, but this is less direct.
-        // A more robust solution involves a separate process to update `hederaAccountId` in DB.
-        const hederaAccountIdForQuery: string = user.wallet.hederaAccountId || user.wallet.hederaEvmAddress; // Prioritize ID if known
+        const hederaAccountIdForQuery: string = user.wallet.hederaAccountId || user.wallet.hederaEvmAddress;
 
         const balance = await getAccountBalance(hederaAccountIdForQuery);
-
-        // Convert tinybars to HBAR (1 HBAR = 100,000,000 tinybars)
         const hbarAmount = parseFloat(balance.hbars);
 
         let response = `💰 Your Hedera Wallet Balance\n\n`;
-        response += `🆔 Account: \`${user.wallet.hederaAccountId || user.wallet.hederaEvmAddress}\`\n\n`;
+        response += `🆔 Account:\n\`${user.wallet.hederaAccountId || user.wallet.hederaEvmAddress}\`\n\n`;
         response += `💎 HBAR: ${hbarAmount.toFixed(6)} ℏ\n`;
         response += `   _(${balance.hbars} tinybars)_\n\n`;
 
@@ -122,7 +124,59 @@ async function handleBalance(bot: any, msg: any): Promise<void> {
     }
 }
 
+// /wallet_info command handler
+async function handleWalletInfo(bot: any, msg: any): Promise<void> {
+    const telegramId: string = msg.chat.id.toString();
+    try {
+        const user = await prisma.user.findUnique({
+            where: { telegramId },
+            include: { wallet: true }
+        }) as any;
+
+        if (!user || !user.wallet) {
+            await bot.sendMessage(telegramId, "You don't have a Hedera wallet yet. Use /create_wallet to create one.");
+            return;
+        }
+
+        // First try with Markdown formatting
+        const markdownMessage = 
+            "🔑 *Your Wallet Details*\n\n" +
+            "*Hedera Account ID:*\n" +
+            "`" + (user.wallet.hederaAccountId || "Not yet available") + "`\n\n" +
+            "*EVM Address:*\n" +
+            "`" + user.wallet.hederaEvmAddress + "`\n\n" +
+            "📊 Use \/balance to check your current balance\n" +
+            "💸 Use \/send\\_hbar to send HBAR to another wallet";
+
+        
+
+        try {
+            await bot.sendMessage(telegramId, markdownMessage, { 
+                parse_mode: 'MarkdownV2'
+            });
+        } catch (markdownError) {
+            console.error("Error sending wallet info:", markdownError);
+            // If Markdown parsing fails, send a plain text version
+            const plainMessage = 
+                "🔑 Your Wallet Details\n\n" +
+                "Hedera Account ID:\n" +
+                (user.wallet.hederaAccountId || "Not yet available") + "\n\n" +
+                "EVM Address:\n" +
+                user.wallet.hederaEvmAddress + "\n\n" +
+                "💡 Use the buttons below to copy addresses\n\n" +
+                "📊 Use /balance to check your current balance\n" +
+                "💸 Use /send_hbar to send HBAR to another wallet";
+            
+            await bot.sendMessage(telegramId, plainMessage);
+        }
+    } catch (error) {
+        console.error("Error fetching wallet info:", error);
+        await bot.sendMessage(telegramId, "Failed to retrieve your wallet information. Please try again later.");
+    }
+}
+
 export {
     handleCreateWallet,
-    handleBalance
+    handleBalance,
+    handleWalletInfo
 };

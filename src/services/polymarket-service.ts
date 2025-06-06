@@ -1,4 +1,3 @@
-import axios from 'axios';
 import { Chain, ClobClient } from "@polymarket/clob-client";
 import { prisma } from '../config/database';
 import { PolymarketMarket } from '@prisma/client';
@@ -98,4 +97,23 @@ export class PolymarketService {
     }> {
         return this.client.getMarkets(cursor);
     }
+
+    async getMarket(marketId: string): Promise<PolymarketMarket | null> {
+        const market = await prisma.polymarketMarket.findUnique({
+            where: {
+                id: marketId
+            },
+            select: {
+                conditionId: true
+            }
+        });
+
+        if (!market) {
+            return null;
+        }
+
+        return this.client.getMarket(market.conditionId);
+    }
+    
+    
 } 
