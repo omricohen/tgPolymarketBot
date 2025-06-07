@@ -70,7 +70,7 @@ export class MarketSyncService {
                 closed: market.closed || false,
                 icon: market.icon || market.image,
                 archived: market.archived || false,
-                acceptingOrders: market.accepting_orders === "true" || false,
+                acceptingOrders: market.accepting_orders || false,
                 acceptingOrderTimestamp: market.accepting_order_timestamp ? new Date(market.accepting_order_timestamp) : null,
                 notificationsEnabled: market.notifications_enabled || false,
                 negRisk: market.neg_risk || false,
