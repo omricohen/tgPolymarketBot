@@ -3,5 +3,6 @@ node_modules
 .env
 dist
 logs/fix*.log
+logs/*
 
 /generated/prisma
