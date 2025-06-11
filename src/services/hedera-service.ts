@@ -1,9 +1,10 @@
 // Hedera service functions
 import { PrivateKey, Hbar, TransferTransaction, AccountCreateTransaction, AccountBalanceQuery, TokenAssociateTransaction, TokenId, AccountId, Client } from '@hashgraph/sdk';
 import {AccountBalanceJson} from '@hashgraph/sdk';
-import { client } from '../config/hedera';
+import { client, operatorId } from '../config/hedera';
 import { encryptWithKMS, AWS_KMS_KEY_ID_USER_ENCRYPTION } from '../config/aws-kms';
 import { type KMSHederaSigner } from './kms-signer';
+import { logInfo } from './logger-service';
 
 const HASHSCAN_BASE_URL = process.env.NODE_ENV === 'production'
     ? "https://hashscan.io/mainnet/transaction/"
@@ -68,8 +69,15 @@ async function createHederaAccountProgrammatically(): Promise<AccountAliasResult
    const MY_ACCOUNT_ID = AccountId.fromString("0.0.6061899");
    const MY_PRIVATE_KEY = PrivateKey.fromStringECDSA("adae74c2ab2bfdd949ecbbe1bd722f811e1e5943866c9bd9edca458ed1e0b1d0");
 
-   // Pre-configured client for test network (testnet)
-   const client = Client.forTestnet();
+   // Initialize client based on environment
+   const client: Client = process.env.NODE_ENV === 'production'
+       ? Client.forMainnet()
+       : Client.forTestnet();
+
+   logInfo('Initializing Hedera client', {
+       network: process.env.NODE_ENV === 'production' ? 'mainnet' : 'testnet',
+       operatorId: operatorId.toString()
+   });
 
    //Set the operator with the account ID and private key
    client.setOperator(MY_ACCOUNT_ID, MY_PRIVATE_KEY);
