@@ -13,7 +13,7 @@ async function handleCreateWallet(bot: any, msg: any): Promise<void> {
         }) as any;
 
         if (user && user.wallet && user.wallet.hederaAccountId) {
-            await bot.sendMessage(telegramId, 
+            await bot.sendMessage(telegramId,
                 "You already have a Hedera wallet. Use /wallet_info to see your wallet details or /balance to check your balance.");
             return;
         }
@@ -73,10 +73,36 @@ async function handleCreateWallet(bot: any, msg: any): Promise<void> {
             });
         }
 
-        await bot.sendMessage(telegramId, 
-            "✅ Your Hedera wallet has been created successfully!\n\n" +
-            "Use /wallet_info to see your wallet details or /balance to check your balance.\n\n" +
-            "💡 Tip: Your wallet has been funded with 10 ℏ tinybars to get you started!");
+        // Create wallet details message with the newly created wallet information
+        let walletDetailsMessage = "✅ Your Hedera wallet has been created successfully!\n\n";
+        walletDetailsMessage += "🔑 *Your Wallet Details*\n\n" +
+        "*Hedera Account ID:*\n" +
+        "`" + (user.wallet.hederaAccountId || "Not yet available") + "`\n\n" +
+        "*EVM Address:*\n" +
+        "`" + user.wallet.hederaEvmAddress + "`\n\n" +
+        "📊 Use \/balance to check your current balance\n" +
+        "💸 Use \/send\\_hbar to send HBAR to another wallet";
+
+        try {
+            await bot.sendMessage(telegramId, walletDetailsMessage, {
+                parse_mode: 'MarkdownV2'
+            });
+        } catch (markdownError) {
+            console.error("Error sending wallet creation message with markdown:", markdownError);
+            // If Markdown parsing fails, send a plain text version
+            const plainMessage =
+                "✅ Your Hedera wallet has been created successfully!\n\n" +
+                "🔑 Your Wallet Details:\n\n" +
+                "Hedera Account ID:\n" +
+                (newAccountId || "Not yet available") + "\n\n" +
+                "EVM Address:\n" +
+                evmAddress + "\n\n" +
+                "💰 Your wallet has been funded with 10 ℏ to get you started!\n\n" +
+                "📊 Use /balance to check your current balance\n" +
+                "💸 Use /send_hbar to send HBAR to another wallet";
+
+            await bot.sendMessage(telegramId, plainMessage);
+        }
 
     } catch (error) {
         console.error("Error creating wallet:", error);
@@ -140,7 +166,7 @@ async function handleWalletInfo(bot: any, msg: any): Promise<void> {
         }
 
         // First try with Markdown formatting
-        const markdownMessage = 
+        const markdownMessage =
             "🔑 *Your Wallet Details*\n\n" +
             "*Hedera Account ID:*\n" +
             "`" + (user.wallet.hederaAccountId || "Not yet available") + "`\n\n" +
@@ -149,16 +175,16 @@ async function handleWalletInfo(bot: any, msg: any): Promise<void> {
             "📊 Use \/balance to check your current balance\n" +
             "💸 Use \/send\\_hbar to send HBAR to another wallet";
 
-        
+
 
         try {
-            await bot.sendMessage(telegramId, markdownMessage, { 
+            await bot.sendMessage(telegramId, markdownMessage, {
                 parse_mode: 'MarkdownV2'
             });
         } catch (markdownError) {
             console.error("Error sending wallet info:", markdownError);
             // If Markdown parsing fails, send a plain text version
-            const plainMessage = 
+            const plainMessage =
                 "🔑 Your Wallet Details\n\n" +
                 "Hedera Account ID:\n" +
                 (user.wallet.hederaAccountId || "Not yet available") + "\n\n" +
@@ -167,7 +193,7 @@ async function handleWalletInfo(bot: any, msg: any): Promise<void> {
                 "💡 Use the buttons below to copy addresses\n\n" +
                 "📊 Use /balance to check your current balance\n" +
                 "💸 Use /send_hbar to send HBAR to another wallet";
-            
+
             await bot.sendMessage(telegramId, plainMessage);
         }
     } catch (error) {
