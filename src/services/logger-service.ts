@@ -26,7 +26,7 @@ export const logger = winston.createLogger({
 });
 
 // Add console transport if not in production
-if (process.env.NODE_ENV !== 'production') {
+// if (process.env.NODE_ENV !== 'production') {
   logger.add(
     new winston.transports.Console({
       format: winston.format.combine(
@@ -35,7 +35,7 @@ if (process.env.NODE_ENV !== 'production') {
       ),
     })
   );
-}
+// }
 
 class LoggerService {
   // Log request details
@@ -79,4 +79,4 @@ class LoggerService {
 }
 
 export const loggerService = new LoggerService();
-export const { logTelegramRequest, logError, logWarning, logInfo, logDebug } = loggerService; 
+export const { logTelegramRequest, logError, logWarning, logInfo, logDebug } = loggerService;

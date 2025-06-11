@@ -66,8 +66,8 @@ async function createHederaAccountAlias(): Promise<AccountAliasResult> {
 
 async function createHederaAccountProgrammatically(): Promise<AccountAliasResult> {
    // Your account ID and private key from string value
-   const MY_ACCOUNT_ID = AccountId.fromString("0.0.6061899");
-   const MY_PRIVATE_KEY = PrivateKey.fromStringECDSA("adae74c2ab2bfdd949ecbbe1bd722f811e1e5943866c9bd9edca458ed1e0b1d0");
+   const MY_ACCOUNT_ID = AccountId.fromString(process.env.HEDERA_OPERATOR_ID!);
+   const MY_PRIVATE_KEY = PrivateKey.fromStringECDSA(process.env.HEDERA_OPERATOR_PRIVATE_KEY!);
 
    // Initialize client based on environment
    const client: Client = process.env.NODE_ENV === 'production'
@@ -92,7 +92,7 @@ async function createHederaAccountProgrammatically(): Promise<AccountAliasResult
    const txCreateAccount = new AccountCreateTransaction()
      .setAlias(accountPublicKey.toEvmAddress()) //Do NOT set an alias if you need to update/rotate keys
      .setKey(accountPublicKey)
-     .setInitialBalance(new Hbar(10));
+     .setInitialBalance(new Hbar(1));
 
    //Sign the transaction with the client operator private key and submit to a Hedera network
    const txCreateAccountResponse = await txCreateAccount.execute(client);
@@ -156,9 +156,8 @@ async function transferHbar(senderAccountId: string | AccountId,
   // If senderPrivateKey is from a user's custodial wallet (decrypted via KMS), use it to sign
   const signedTx = await transaction.freezeWith(client).sign(senderPrivateKey); // Or use custom signer if MPC
   const txResponse = await signedTx.execute(client);
-  console.log("TxResponse:", txResponse);
   const receipt = await txResponse.getReceipt(client);
-  console.log("Receipt:", receipt);
+
   return {
     status: receipt.status.toString(),
     transactionId: txResponse.transactionId.toString(), // Get the transaction ID string

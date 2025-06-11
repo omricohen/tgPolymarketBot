@@ -74,30 +74,31 @@ async function handleCreateWallet(bot: any, msg: any): Promise<void> {
         }
 
         // Create wallet details message with the newly created wallet information
-        let walletDetailsMessage = "✅ Your Hedera wallet has been created successfully!\n\n";
-        walletDetailsMessage += "🔑 *Your Wallet Details*\n\n" +
-        "*Hedera Account ID:*\n" +
-        "`" + (user.wallet.hederaAccountId || "Not yet available") + "`\n\n" +
-        "*EVM Address:*\n" +
-        "`" + user.wallet.hederaEvmAddress + "`\n\n" +
-        "📊 Use \/balance to check your current balance\n" +
-        "💸 Use \/send\\_hbar to send HBAR to another wallet";
+        let walletDetailsMessage = "✅ Your Hedera wallet has been created successfully \n\n" +
+            "🔑 *Your Wallet Details*\n\n" +
+            "*Hedera Account ID:*\n" +
+            "`" + (user.wallet.hederaAccountId || "Not yet available") + "`\n\n" +
+            "*EVM Address:*\n" +
+            "`" + user.wallet.hederaEvmAddress + "`\n\n" +
+            "📊 Use \/balance to check your current balance\n" +
+            "💸 Use \/send\\_hbar to send HBAR to another wallet";
+
 
         try {
             await bot.sendMessage(telegramId, walletDetailsMessage, {
                 parse_mode: 'MarkdownV2'
             });
         } catch (markdownError) {
-            console.error("Error sending wallet creation message with markdown:", markdownError);
+            console.error("Error sending wallet creation message with markdown:", (markdownError as Error).message);
             // If Markdown parsing fails, send a plain text version
             const plainMessage =
                 "✅ Your Hedera wallet has been created successfully!\n\n" +
-                "🔑 Your Wallet Details:\n\n" +
+                "🔑 Your Wallet Details\n\n" +
                 "Hedera Account ID:\n" +
-                (newAccountId || "Not yet available") + "\n\n" +
+                (user.wallet.hederaAccountId || "Not yet available") + "\n\n" +
                 "EVM Address:\n" +
-                evmAddress + "\n\n" +
-                "💰 Your wallet has been funded with 10 ℏ to get you started!\n\n" +
+                user.wallet.hederaEvmAddress + "\n\n" +
+                "💡 Use the buttons below to copy addresses\n\n" +
                 "📊 Use /balance to check your current balance\n" +
                 "💸 Use /send_hbar to send HBAR to another wallet";
 
